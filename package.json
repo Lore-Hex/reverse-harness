@@ -1,0 +1,42 @@
+{
+  "name": "@trustedrouter/reverse-harness",
+  "version": "0.1.0",
+  "description": "Turn a human at a keyboard into an OpenAI-compatible TrustedRouter model.",
+  "type": "module",
+  "bin": {
+    "reverse-harness": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "ui"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "trustedrouter",
+    "openai",
+    "human-in-the-loop",
+    "sse"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lore-Hex/reverse-harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lore-Hex/reverse-harness/issues"
+  },
+  "homepage": "https://github.com/Lore-Hex/reverse-harness#readme",
+  "devDependencies": {
+    "@types/node": "^22.19.21",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

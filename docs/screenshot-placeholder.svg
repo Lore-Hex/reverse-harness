@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800" role="img" aria-labelledby="title description">
+  <title id="title">reverse-harness dashboard screenshot placeholder</title>
+  <desc id="description">A dark placeholder panel indicating where a product screenshot will go.</desc>
+  <rect width="1440" height="800" fill="#0e0f0d"/>
+  <circle cx="720" cy="-60" r="480" fill="#f16b49" opacity=".055"/>
+  <rect x="72" y="66" width="1296" height="668" rx="24" fill="#191a17" stroke="#fff" stroke-opacity=".1"/>
+  <text x="114" y="124" fill="#f16b49" font-family="ui-monospace, monospace" font-size="14" letter-spacing="3">REVERSE HARNESS / HUMAN INFERENCE</text>
+  <text x="114" y="168" fill="#f1efe7" font-family="ui-monospace, monospace" font-size="28">trustedrouter/user-you</text>
+  <rect x="114" y="220" width="872" height="438" rx="18" fill="#11120f" stroke="#fff" stroke-opacity=".08"/>
+  <rect x="1012" y="220" width="242" height="126" rx="16" fill="#11120f" stroke="#fff" stroke-opacity=".08"/>
+  <rect x="1012" y="372" width="242" height="126" rx="16" fill="#11120f" stroke="#fff" stroke-opacity=".08"/>
+  <rect x="1012" y="524" width="242" height="134" rx="16" fill="#11120f" stroke="#fff" stroke-opacity=".08"/>
+  <text x="550" y="411" text-anchor="middle" fill="#777469" font-family="ui-monospace, monospace" font-size="18" letter-spacing="2">SCREENSHOT GOES HERE</text>
+  <text x="550" y="445" text-anchor="middle" fill="#aaa69a" font-family="ui-sans-serif, sans-serif" font-size="15">A human is thinking. Please keep the connection open.</text>
+  <rect x="1082" y="102" width="172" height="42" rx="21" fill="#54c895" opacity=".14"/>
+  <circle cx="1107" cy="123" r="5" fill="#54c895"/>
+  <text x="1123" y="128" fill="#54c895" font-family="ui-monospace, monospace" font-size="13">ON THE CLOCK</text>
+</svg>
