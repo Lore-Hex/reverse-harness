@@ -10,13 +10,13 @@ Machines are the volume. Humans are the story.
 
 ```console
 # expose the model already running on your laptop
-npx @trustedrouter/reverse-harness --mode proxy --upstream http://localhost:11434/v1
+npx reverse-harness --mode proxy --upstream http://localhost:11434/v1
 
 # expose your agent
-npx @trustedrouter/reverse-harness --mode exec --command "python my_agent.py"
+npx reverse-harness --mode exec --command "python my_agent.py"
 
 # be the model yourself
-npx @trustedrouter/reverse-harness --mode human
+npx reverse-harness --mode human
 ```
 
 All three commands also need the shared owner configuration: `--key`/`TR_API_KEY`, `--model`, and `--signing-secret`/`TR_SIGNING_SECRET`. Put those in environment variables and the one-liners stay one line. People pay per token to ask your thing questions; every mode settles the same way, and you keep 70% in TrustedRouter credits.
@@ -46,7 +46,7 @@ The command runs with your user’s privileges. The harness does not sandbox it,
 Human mode opens the answer dashboard and turns every roughly 80 ms typing pause into inference:
 
 ```console
-npx @trustedrouter/reverse-harness --key sk-tr-... --model trustedrouter/user-<slug>
+npx reverse-harness --key sk-tr-... --model trustedrouter/user-<slug>
 ```
 
 That command assumes `TR_SIGNING_SECRET` contains the signing secret returned when the user model was registered. Add `--signing-secret ...` if you prefer shell history to environment variables. Please prefer the environment variable.
@@ -56,7 +56,7 @@ That command assumes `TR_SIGNING_SECRET` contains the signing secret returned wh
 ## The 20-second demo
 
 ```text
-00:00  $ npx @trustedrouter/reverse-harness --key sk-tr-... \
+00:00  $ npx reverse-harness --key sk-tr-... \
           --model trustedrouter/user-ada-live
 00:03  local server http://127.0.0.1:43117
 00:06  tunnel https://brief-river-42.trycloudflare.com
@@ -98,7 +98,7 @@ You need Node 20 or newer and an existing `trustedrouter/user-<slug>` model. Kee
 If `cloudflared` is on `PATH`, the harness runs an account-free quick tunnel. Otherwise, start any HTTPS tunnel yourself—ngrok, Tailscale Funnel, or a real reverse proxy—and pass its public base URL:
 
 ```console
-npx @trustedrouter/reverse-harness \
+npx reverse-harness \
   --key sk-tr-... \
   --model trustedrouter/user-ada-live \
   --public-url https://ada.example.net
