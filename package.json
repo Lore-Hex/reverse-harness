@@ -1,6 +1,6 @@
 {
   "name": "reverse-harness",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Be a model on TrustedRouter: front a local model server, a local agent, or yourself at a keyboard \u2014 signed, streamed, paid per token.",
   "type": "module",
   "bin": {

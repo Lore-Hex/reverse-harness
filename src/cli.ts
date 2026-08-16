@@ -2,7 +2,8 @@
 
 import { createHmac, randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
+import { realpathSync } from "node:fs";
 import {
   extractOwnerRuntime,
   HeartbeatController,
@@ -38,12 +39,14 @@ interface CliOptions {
   execPersistent: boolean;
   /** Local demo: no TrustedRouter account, no tunnel, no clock, nothing billed. */
   demo: boolean;
+  /** Answer only: the model is created and clocked in from the website. */
+  serveOnly: boolean;
   execTimeoutSeconds?: number;
   publicUrl?: string;
   requireBearer?: string;
 }
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 export async function main(argv = process.argv.slice(2)): Promise<void> {
   let options: CliOptions;
@@ -146,6 +149,11 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     if (!endpointUrl) throw new Error("No public endpoint URL is available");
     if (options.demo) {
       printDemoInstructions(endpointUrl, options, logger);
+    } else if (options.serveOnly) {
+      logger("info", "");
+      logger("info", `endpoint_url for this model: ${endpointUrl}`);
+      logger("info", "Paste it at /console/user-models, then press “Probe and clock in”.");
+      logger("info", "");
     } else if (options.patchEndpoint) {
       try {
         await client.patchEndpointUrl(endpointUrl);
@@ -161,6 +169,9 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     if (options.demo) {
       server.setOnClock(true);
       logger("info", "ON THE CLOCK (demo) — Ctrl-C to stop");
+    } else if (options.serveOnly) {
+      server.setOnClock(true);
+      logger("info", "SERVING — clock in and out on the website; Ctrl-C stops answering");
     } else {
     logger("info", "clocking in (the signed canary is answered automatically)…");
     const clockResponse = await client.clockIn();
@@ -190,7 +201,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         logger("info", `${signal} received; clocking out…`);
         void (async () => {
           heartbeat?.stop();
-          if (!options.demo) {
+          if (!options.demo && !options.serveOnly) {
             try {
               await client.clockOut();
             } catch (error) {
@@ -264,6 +275,7 @@ export function parseArgs(argv: string[]): CliOptions | "help" | "version" {
   ]);
   const flagOptions = new Set([
     "--demo",
+    "--serve",
     "--stream",
     "--no-stream",
     "--verbose",
@@ -300,13 +312,25 @@ export function parseArgs(argv: string[]): CliOptions | "help" | "version" {
   // paste into a second terminal. It is how you show the thing before you have
   // an account.
   const demo = flags.has("--demo");
-  const apiKey = values.get("--key") ?? process.env.TR_API_KEY ?? (demo ? "demo-no-account" : undefined);
+  // --serve is the console path: create the model and clock in from the
+  // website, and let this process do nothing but answer. It needs the signing
+  // secret (to verify the requests TrustedRouter sends) and nothing else — no
+  // API key, no clock calls, no permission to change anything on the account.
+  const serveOnly = flags.has("--serve");
+  const apiKey =
+    values.get("--key") ??
+    process.env.TR_API_KEY ??
+    (demo || serveOnly ? "not-required-in-this-mode" : undefined);
   const modelId = values.get("--model") ?? (demo ? "trustedrouter/user-demo" : undefined);
   const signingSecret =
     values.get("--signing-secret") ??
     process.env.TR_SIGNING_SECRET ??
     (demo ? randomBytes(24).toString("hex") : undefined);
-  if (!apiKey) throw new Error("Missing --key (or TR_API_KEY). Try --demo to run without an account.");
+  if (!apiKey) {
+    throw new Error(
+      "Missing --key (or TR_API_KEY). Use --serve to clock in from the website instead, or --demo to run without an account.",
+    );
+  }
   if (!modelId) throw new Error("Missing --model");
   if (!signingSecret) throw new Error("Missing --signing-secret (or TR_SIGNING_SECRET)");
 
@@ -346,6 +370,7 @@ export function parseArgs(argv: string[]): CliOptions | "help" | "version" {
     patchEndpoint: !flags.has("--no-patch"),
     execPersistent: flags.has("--exec-persistent"),
     demo,
+    serveOnly,
   };
   if (publicUrlValue !== undefined) options.publicUrl = publicUrlValue.replace(/\/+$/, "");
   const requireBearer = values.get("--require-bearer");
@@ -432,7 +457,7 @@ Usage:
   reverse-harness --mode human [shared options]
 
 Shared required:
-  --demo                      Run with no TrustedRouter account: no tunnel, no clock,\n                              prints a signed curl you can paste to ask a question\n  --key <key>                 TrustedRouter management key (or TR_API_KEY)
+  --demo                      Run with no TrustedRouter account: no tunnel, no clock,\n                              prints a signed curl you can paste to ask a question\n  --serve                     Answer only. Create the model and clock in on the\n                              website; needs --signing-secret, no API key\n  --key <key>                 TrustedRouter management key (or TR_API_KEY)
   --model <id>                TrustedRouter model id
   --signing-secret <secret>   Endpoint signing secret (or TR_SIGNING_SECRET)
 
@@ -466,7 +491,29 @@ Local:
   --version                   Show the version`;
 }
 
-const entrypoint = process.argv[1];
-if (entrypoint && import.meta.url === pathToFileURL(entrypoint).href) {
+// npm installs the bin as a SYMLINK in node_modules/.bin, so under `npx` this
+// file's URL is the real dist/cli.js while process.argv[1] is the link. A plain
+// equality check silently does nothing and the command exits 0 with no output —
+// which is exactly what shipped in 0.1.0 and 0.1.1. Resolve both sides.
+function isDirectEntrypoint(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  const self = fileURLToPath(import.meta.url);
+  const candidates = [invoked];
+  try {
+    candidates.push(realpathSync(invoked));
+  } catch {
+    // the path may not exist on disk (piped input); the raw compare still holds
+  }
+  let resolvedSelf = self;
+  try {
+    resolvedSelf = realpathSync(self);
+  } catch {
+    // keep the unresolved path
+  }
+  return candidates.some((candidate) => candidate === self || candidate === resolvedSelf);
+}
+
+if (isDirectEntrypoint()) {
   void main();
 }
