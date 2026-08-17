@@ -91,6 +91,49 @@ describe("local signed HTTP flow", () => {
     expect(declined.status).toBe(422);
     expect(await declined.json()).toMatchObject({ error: { type: "request_declined", code: "human_declined" } });
   });
+  it("serves the canary at /v1/chat/completions as well as /chat/completions", async () => {
+    // TrustedRouter appends /chat/completions to the endpoint_url you
+    // registered, and the docs example registers a URL ending in /v1. A
+    // copy-paste setup therefore calls /v1/chat/completions here. Serving
+    // only the bare path made that a 404 with nothing on screen to explain
+    // it — the likeliest first-run failure there is.
+    const raw = JSON.stringify({
+      model: "demo",
+      stream: false,
+      messages: [{ role: "user", content: CANARY_PROMPT }],
+    });
+
+    const responses = await Promise.all(
+      ["/chat/completions", "/v1/chat/completions"].map((path) => {
+        const timestamp = now();
+        return fetch(`${server.localUrl}${path}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "TR-Signature": signBody(signingSecret, timestamp, Buffer.from(raw)),
+          },
+          body: raw,
+        });
+      }),
+    );
+
+    for (const response of responses) {
+      expect(response.status).toBe(200);
+    }
+    const bodies = await Promise.all(responses.map((r) => r.json()));
+    for (const body of bodies) {
+      expect(body.choices[0].message.role).toBe("assistant");
+    }
+  });
+
+  it("still 404s an unrelated path", async () => {
+    const response = await fetch(`${server.localUrl}/v2/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    expect(response.status).toBe(404);
+  });
 });
 
 function now(): number {

@@ -269,7 +269,15 @@ export class HarnessServer {
       await this.handleUiDecline(request, response);
       return;
     }
-    if (request.method === "POST" && url.pathname === "/chat/completions") {
+    // Both spellings. TrustedRouter appends /chat/completions to whatever
+    // endpoint_url you registered, and the docs example registers a URL
+    // ending in /v1 — so a copy-paste setup calls /v1/chat/completions here
+    // and used to get a 404 with nothing on screen to explain it. Serving
+    // both costs a comparison and removes the likeliest first-run failure.
+    if (
+      request.method === "POST" &&
+      (url.pathname === "/chat/completions" || url.pathname === "/v1/chat/completions")
+    ) {
       await this.handleCompletionRequest(request, response);
       return;
     }
@@ -442,13 +450,15 @@ export class HarnessServer {
     }
     if (this.verbose) this.logger("info", `request body=${rawBody.toString("utf8")}`);
 
-    if (completionRequest.stream !== this.streamMode) {
-      this.logger(
-        "warn",
-        `TRANSPORT MISMATCH: request stream=${String(completionRequest.stream)} but harness is registered with supports_streaming=${String(this.streamMode)}; answering in the registered mode.`,
-      );
-    }
-    const transport: AnswerTransport = this.streamMode ? "stream" : "json";
+    // Answer in the transport the REQUEST asks for. An OpenAI-compatible
+    // server honours `stream`, and TrustedRouter's probe relies on that: it
+    // checks a buffered answer even for a model registered as streaming,
+    // while dispatch sends stream = supports_streaming. Obeying the flag
+    // satisfies both, and a caller who omits it gets the registered mode.
+    const transport: AnswerTransport =
+      completionRequest.stream === undefined
+        ? (this.streamMode ? "stream" : "json")
+        : (completionRequest.stream ? "stream" : "json");
 
     if (isCanaryRequest(completionRequest)) {
       this.answerCanary(response, completionRequest, transport);
