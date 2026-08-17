@@ -799,3 +799,48 @@ body.monitor-mode .prompt-panel {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Short viewports: keep the answer box and its buttons on screen.
+ *
+ * The other breakpoints key off width, so a laptop window at 800x450 kept the
+ * full 210px textarea plus margins and pushed Send/Decline 375px below the
+ * fold — you could read the question but had to go looking for the controls.
+ * On a clock that starts the moment the request lands, that is the wrong
+ * thing to make someone hunt for. Shrink the box and pin the action row to
+ * the bottom of the composer so it is always reachable. */
+@media (max-height: 760px) {
+  textarea {
+    min-height: 96px;
+    margin-top: 12px;
+  }
+
+  .composer-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: 10px;
+    padding: 10px 0 8px;
+    background: var(--surface-solid);
+    border-top: 1px solid var(--line);
+  }
+
+  .decline-copy {
+    display: none;
+  }
+
+  /* Reclaim the header chrome too — on a 450px-tall window the topbar and
+   * endpoint block alone ate the room the request needed. */
+  .topbar {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .shift-meta {
+    display: none;
+  }
+
+  .panel {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}

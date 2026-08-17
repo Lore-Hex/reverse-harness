@@ -135,7 +135,12 @@ function renderQueue(tasks) {
     dot.className = "queue-dot";
     const name = document.createElement("span");
     name.className = "queue-name";
-    name.textContent = task.messages.at(-1)?.role ?? "request";
+    // The question, not the role. Every entry said "user", so a queue of
+    // three was three identical rows and you picked one by guessing.
+    const last = task.messages.at(-1);
+    const asked = typeof last?.content === "string" ? last.content.trim() : "";
+    name.textContent = asked ? asked.slice(0, 60) : (last?.role ?? "request");
+    if (asked) name.title = asked;
     const age = document.createElement("span");
     age.className = "queue-age";
     age.textContent = ageLabel(Date.now() - task.createdAt);
