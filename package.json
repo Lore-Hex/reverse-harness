@@ -41,7 +41,7 @@
   },
   "homepage": "https://trustedrouter.com/docs/user-models",
   "devDependencies": {
-    "@types/node": "^22.19.21",
+    "@types/node": "^26.2.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
